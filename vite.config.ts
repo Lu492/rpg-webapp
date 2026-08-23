@@ -1,3 +1,4 @@
+// Configures Vite's React plugin and local development server.
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 

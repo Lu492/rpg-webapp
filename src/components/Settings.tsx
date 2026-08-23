@@ -1,3 +1,4 @@
+// Stores the optional AI API key used by the campaign.
 import React, { useState, useEffect } from 'react'
 import { saveApiKey, loadApiKey } from '../utils/storage'
 

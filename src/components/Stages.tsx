@@ -1,3 +1,4 @@
+// Provides stage-specific enemy selection and generation before an encounter begins.
 import React, { useState } from 'react'
 import { Monster } from '../models'
 import { loadBestiary, saveBestiary } from '../utils/storage'

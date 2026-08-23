@@ -1,3 +1,4 @@
+// Displays and maintains the locally saved monster catalog.
 import React, { useState, useEffect } from 'react'
 import { loadBestiary, saveBestiary } from '../utils/storage'
 import { Monster } from '../models'

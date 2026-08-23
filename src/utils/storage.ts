@@ -88,8 +88,12 @@ export function initializeDefaults() {
   if (!localStorage.getItem(PREFIX + 'characters')) {
     saveCharacters(defaultCharacters())
   }
-  if (!localStorage.getItem(PREFIX + 'bestiary')) {
-    saveBestiary(defaultBestiary())
+  const storedBestiary = loadBestiary()
+  const seededBestiary = defaultBestiary()
+  const existingIds = new Set(storedBestiary.monsters.map((monster) => monster.id))
+  const missingFallbacks = seededBestiary.monsters.filter((monster) => !existingIds.has(monster.id))
+  if (!localStorage.getItem(PREFIX + 'bestiary') || missingFallbacks.length) {
+    saveBestiary({ monsters: [...storedBestiary.monsters, ...missingFallbacks] })
   }
   if (!localStorage.getItem(PREFIX + 'inventory')) {
     saveInventory(defaultItems())

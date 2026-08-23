@@ -1,3 +1,4 @@
+ # Builds the Vite bundle and serves it from a small production Nginx image.
 FROM node:20-alpine AS build
 
 WORKDIR /app

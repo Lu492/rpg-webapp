@@ -1,3 +1,4 @@
+// Displays and maintains the player's locally saved item inventory.
 import React, { useState } from 'react'
 import { Item } from '../models'
 import { loadInventory, saveInventory } from '../utils/storage'

@@ -1,0 +1,62 @@
+RPG WEBAPP PROJECT GUIDE
+=========================
+
+BUSINESS FLOW
+-------------
+The application is a mobile-oriented single-player RPG campaign. A player creates or loads a party of three characters, chooses an AI provider, and plays four sequential stages.
+
+1. Start page
+   The player creates characters from descriptions or loads the saved party. Each character has level 1, 2, and 3 versions. The player chooses the campaign party and the AI provider.
+
+2. Stage setup
+   For stages 1 to 3, the player selects saved monsters from the bestiary or generates new monsters. For stage 4, the player selects or generates one boss and up to two minions. Generated enemies are saved for later use.
+
+3. Encounter
+   The player chooses exactly one action for each living character. The enemy chooses exactly one action for each living monster using the selected AI provider. If the AI is unavailable, the stored attack pattern is used and the player is notified.
+
+4. Results
+   A victory raises the party to the level required by the next stage and displays acquired items. Defeat displays Game Over and returns the player to the start page. Defeating the stage 4 boss displays the campaign winner page.
+
+5. Saved data management
+   The start page lets the player delete saved characters, bestiary entries, and inventory items. Data is stored locally in the browser as JSON.
+
+TECHNICAL FLOW
+--------------
+The project is a React 18 + TypeScript application built with Vite. Docker uses a multi-stage build: Node builds the Vite bundle, then Nginx serves the static dist directory. Nginx redirects unknown routes to index.html for the client-side flow.
+
+App.tsx is the application flow controller. It changes the page between start, setup, encounter, reward, gameover, and winner. Stages.tsx selects or generates the encounter. Battle.tsx displays one encounter and collects player actions. combat.ts contains turn resolution, damage, level progression, and fallback enemy targeting.
+
+models.ts defines Character, CharacterVersion, Monster, Item, Skill, and Bestiary. data/seeds.ts supplies fallback characters, monsters, bosses, minions, and items. utils/storage.ts serializes these values to localStorage using the rpg.* prefix and upgrades old character saves. utils/generator.ts creates three character versions. services/ai.ts calls the selected chat-completions provider.
+
+AI SETUP: OPENAI
+----------------
+1. Create an API key in the OpenAI platform.
+2. Start the app and choose OpenAI on the start page.
+3. Enter the key in the API key field. It is stored only in this browser's localStorage.
+4. Create or load the party and start the campaign.
+5. OpenAI is used for character descriptions and enemy target selection. If the request fails, stored enemy patterns are used.
+
+AI SETUP: DEEPSEEK
+------------------
+1. Create an API key in the DeepSeek platform.
+2. Start the app and choose DeepSeek on the start page.
+3. Enter the key in the API key field. It is stored only in this browser's localStorage.
+4. Create or load the party and start the campaign.
+5. The app sends the same chat-completions format to https://api.deepseek.com/chat/completions using the deepseek-chat model. If the request fails, stored enemy patterns are used.
+
+IMPORTANT SECURITY NOTE
+-----------------------
+This prototype calls AI providers directly from the browser, so the API key is exposed to the browser session. For production, move provider calls to a server-side backend and keep secrets in environment variables. Never commit an API key to GitHub.
+
+SETUP COMMANDS
+--------------
+Local development:
+  npm install
+  npm run dev
+
+Docker:
+  docker build -t rpg-webapp .
+  docker run --name rpg-webapp -p 8080:80 rpg-webapp
+
+Tests:
+  npm test

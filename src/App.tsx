@@ -1,3 +1,4 @@
+// Controls the campaign pages and keeps the selected party and encounter state together.
 import React, { useState } from 'react'
 import { Character, Monster, Item } from './models'
 import { generateCharacters } from './utils/generator'

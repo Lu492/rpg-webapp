@@ -1,3 +1,4 @@
+// Renders one encounter and collects exactly one action per living character each turn.
 import React, { useState } from 'react'
 import { Character, Monster } from '../models'
 import { loadApiKey, loadBestiary, loadCharacters, saveCharacters } from '../utils/storage'

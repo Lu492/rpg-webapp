@@ -1,3 +1,4 @@
+// Defines the domain shapes shared by the UI, game systems, and persistence layer.
 export type StatName = 'stamina' | 'dexterity' | 'intelligence' | 'empathy'
 
 export interface Stats {
