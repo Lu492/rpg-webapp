@@ -25,6 +25,7 @@ export default function Battle({ initialCharacters, initialMonsters, onBattleEnd
   const [actions, setActions] = useState<Record<string, PlayerAction>>({})
   const [toast, setToast] = useState('')
   const [infoSkill, setInfoSkill] = useState<string | null>(null)
+  const hasApiKey = Boolean(loadApiKey())
 
   function pickRandomMonsters() {
     const count = Math.max(1, Math.floor(Math.random() * 6) + 1)
@@ -91,7 +92,7 @@ export default function Battle({ initialCharacters, initialMonsters, onBattleEnd
       {toast && <div role="status" style={{ padding: 10, marginBottom: 10, background: '#5b3a12', borderRadius: 8 }}>{toast}</div>}
       {!state && !initialMonsters?.length && <>
         <div className="row">
-          <button className="btn" onClick={pickRandomMonsters}>Create Random Monsters</button>
+          <button className="btn" disabled={!hasApiKey} onClick={pickRandomMonsters}>Create Random Monsters{!hasApiKey ? ' (API key required)' : ''}</button>
           <button className="btn" onClick={() => setStageMonsters(bestiary.monsters.slice(0, 3))}>Use Bestiary</button>
         </div>
         <div style={{ marginTop: 8 }}><strong>Monsters:</strong> {stageMonsters.map((monster) => monster.name).join(', ') || 'none selected'}</div>

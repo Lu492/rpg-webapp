@@ -1,6 +1,7 @@
 // Displays and maintains the locally saved monster catalog.
 import React, { useState, useEffect } from 'react'
 import { loadBestiary, saveBestiary } from '../utils/storage'
+import { loadApiKey } from '../utils/storage'
 import { Monster } from '../models'
 
 function randName() {
@@ -10,6 +11,7 @@ function randName() {
 
 export default function Bestiary() {
   const [bestiary, setBestiary] = useState(() => loadBestiary())
+  const hasApiKey = Boolean(loadApiKey())
 
   useEffect(() => {
     // no-op
@@ -23,7 +25,8 @@ export default function Bestiary() {
       stats: { stamina: 4, dexterity: 3, intelligence: 2, empathy: 1 },
       hp: 30 + Math.floor(Math.random() * 80),
       mp: 0,
-      skills: []
+      skills: [],
+      kind: 'monster'
     }
     const next = { monsters: [...bestiary.monsters, m] }
     setBestiary(next)
@@ -40,8 +43,8 @@ export default function Bestiary() {
     <div style={{ marginTop: 12 }}>
       <h3>Bestiary</h3>
       <div className="row">
-        <button className="btn" onClick={addRandom} type="button">
-          Add Random Monster
+          <button className="btn" disabled={!hasApiKey} onClick={addRandom} type="button">
+            Add Random Monster{!hasApiKey ? ' (API key required)' : ''}
         </button>
       </div>
       <ul>

@@ -45,7 +45,13 @@ export function loadBestiary(): Bestiary {
   const raw = localStorage.getItem(PREFIX + 'bestiary')
   if (!raw) return { monsters: [] }
   try {
-    return JSON.parse(raw)
+    const bestiary = JSON.parse(raw) as Bestiary
+    return {
+      monsters: bestiary.monsters.map((monster) => ({
+        ...monster,
+        kind: monster.kind || (monster.id.startsWith('b-') ? 'boss' : monster.id.startsWith('minion-') ? 'minion' : 'monster')
+      }))
+    }
   } catch (e) {
     return { monsters: [] }
   }

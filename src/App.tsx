@@ -20,6 +20,7 @@ export default function App() {
   const [rewardItems, setRewardItems] = useState<Item[]>([])
   const [provider, setProvider] = useState(loadAiProvider())
   const [apiKey, setApiKey] = useState(loadApiKey() || '')
+  const hasApiKey = Boolean(apiKey.trim())
   const [managedBestiary, setManagedBestiary] = useState(() => loadBestiary())
   const [managedInventory, setManagedInventory] = useState(() => loadInventory())
 
@@ -98,7 +99,7 @@ export default function App() {
           <select className="input" value={provider} onChange={(event) => { const value = event.target.value as 'openai' | 'deepseek'; setProvider(value); saveAiProvider(value) }}><option value="openai">OpenAI</option><option value="deepseek">DeepSeek</option></select>
           <input className="input" type="password" placeholder={`${provider} API key`} value={apiKey} onChange={(event) => setApiKey(event.target.value)} onBlur={() => saveApiKey(apiKey)} />
           {names.map((name, index) => <input key={index} className="input" placeholder={`Character ${index + 1} description`} value={name} onChange={(event) => updateName(index, event.target.value)} />)}
-          <button className="btn" onClick={async () => { await createCharacters() }}>Create Characters</button>
+          <button className="btn" disabled={!hasApiKey} onClick={async () => { await createCharacters() }}>Create Characters{!hasApiKey ? ' (API key required)' : ''}</button>
           <button className="btn" style={{ marginTop: 8 }} onClick={() => { const loaded = loadCharacters(); setCharacters(loaded); setSelectedCharacterIds(loaded.map((character) => character.id)) }}>Load Saved Characters</button>
           <h3>Choose Campaign Characters</h3>
           <ul>{characters.map((character) => <li key={character.id}><label><input type="checkbox" checked={selectedCharacterIds.includes(character.id)} onChange={() => setSelectedCharacterIds((current) => current.includes(character.id) ? current.filter((id) => id !== character.id) : current.length < 3 ? [...current, character.id] : current)} /> <strong>{character.name}</strong> Lv {character.level} | HP {character.hp} | MP {character.mp} | STA {character.stats.stamina} | DEX {character.stats.dexterity} | INT {character.stats.intelligence} | EMP {character.stats.empathy}</label></li>)}</ul>

@@ -1,3 +1,4 @@
+# Keeps local dependencies, build output, and repository metadata out of Docker builds.
 node_modules
 dist
 .git

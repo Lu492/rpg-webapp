@@ -2,10 +2,12 @@
 import React, { useState } from 'react'
 import { Item } from '../models'
 import { loadInventory, saveInventory } from '../utils/storage'
+import { loadApiKey } from '../utils/storage'
 
 export default function Inventory() {
   const [items, setItems] = useState<Item[]>(() => loadInventory())
   const [name, setName] = useState('')
+  const hasApiKey = Boolean(loadApiKey())
 
   function addItem() {
     if (!name) return alert('Enter item name')
@@ -27,8 +29,8 @@ export default function Inventory() {
       <h3>Inventory</h3>
       <div style={{ display: 'flex', gap: 8 }}>
         <input className="input" placeholder="Item name" value={name} onChange={(e) => setName(e.target.value)} />
-        <button className="btn" onClick={addItem} type="button">
-          Add
+        <button className="btn" disabled={!hasApiKey} onClick={addItem} type="button">
+          Add{!hasApiKey ? ' (API key required)' : ''}
         </button>
       </div>
       <ul>

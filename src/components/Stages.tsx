@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { Monster } from '../models'
 import { loadBestiary, saveBestiary } from '../utils/storage'
+import { loadApiKey } from '../utils/storage'
 
 type StagesProps = {
   stage: number
@@ -11,6 +12,7 @@ type StagesProps = {
 export default function Stages({ stage, onStartStage }: StagesProps) {
   const [bestiary, setBestiary] = useState(() => loadBestiary())
   const [selectedMonsters, setSelectedMonsters] = useState<string[]>([])
+  const hasApiKey = Boolean(loadApiKey())
 
   function toggleMonster(id: string) {
     setSelectedMonsters((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id])
@@ -26,7 +28,8 @@ export default function Stages({ stage, onStartStage }: StagesProps) {
       hp: stage === 4 ? 120 : 20 + stage * 15,
       mp: stage === 4 ? 40 : 0,
       skills: [],
-      attackPattern: stage % 2 === 0 ? 'focus-lowest-hp' : 'focus-weakest'
+      attackPattern: stage % 2 === 0 ? 'focus-lowest-hp' : 'focus-weakest',
+      kind: stage === 4 ? (index === 0 ? 'boss' : 'minion') : 'monster'
     }))
     const next = { monsters: [...bestiary.monsters, ...generated] }
     saveBestiary(next)
@@ -42,9 +45,9 @@ export default function Stages({ stage, onStartStage }: StagesProps) {
       onStartStage(foes)
       return
     }
-    const boss = selected.find((monster) => monster.id.startsWith('b-') || monster.name.toLowerCase().includes('boss')) || bestiary.monsters.find((monster) => monster.id.startsWith('b-'))
+    const boss = selected.find((monster) => monster.kind === 'boss')
     if (!boss) return alert('Select or generate a boss first')
-    const minions = selected.filter((monster) => monster.id !== boss.id && !monster.id.startsWith('b-')).slice(0, 2)
+    const minions = selected.filter((monster) => monster.id !== boss.id && monster.kind !== 'boss').slice(0, 2)
     onStartStage([boss, ...minions])
   }
 
@@ -54,7 +57,7 @@ export default function Stages({ stage, onStartStage }: StagesProps) {
       <p>How to play: load saved enemies or generate new ones, select the enemies for this encounter, then press Start Stage. Your party was chosen on the main page.</p>
       <strong>{stage === 4 ? 'Load a boss and up to two minions, or generate a boss' : 'Load monsters or generate 1 to 6 monsters'}</strong>
       <ul>{bestiary.monsters.map((monster) => <li key={monster.id}><label><input type="checkbox" checked={selectedMonsters.includes(monster.id)} onChange={() => toggleMonster(monster.id)} /> {monster.name} Lv{monster.level}</label></li>)}</ul>
-      <button className="btn" onClick={generateMonsters}>Generate {stage === 4 ? 'Boss and Minions' : 'Monsters'}</button>
+      <button className="btn" disabled={!hasApiKey} onClick={generateMonsters}>Generate {stage === 4 ? 'Boss and Minions' : 'Monsters'}{!hasApiKey ? ' (API key required)' : ''}</button>
       <button className="btn" style={{ marginTop: 8 }} onClick={startStage}>Start Stage</button>
     </div>
   )

@@ -52,6 +52,7 @@ export interface Monster {
   mp: number
   skills: Skill[]
   attackPattern?: 'focus-weakest' | 'focus-lowest-hp' | 'random'
+  kind?: 'monster' | 'minion' | 'boss'
 }
 
 export interface Bestiary {

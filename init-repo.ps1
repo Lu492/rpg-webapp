@@ -1,3 +1,4 @@
+ # Initializes the local Git repository and optionally pushes its first commit.
 param(
   [string]$Remote = ''
 )
