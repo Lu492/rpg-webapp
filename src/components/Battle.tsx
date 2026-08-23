@@ -101,7 +101,7 @@ export default function Battle({ initialCharacters, initialMonsters, onBattleEnd
         <p>Turn {state.turn} · Phase: {state.phase}</p>
         {state.phase === 'players' && state.players.map((player) => player.hp > 0 && (
           <div key={player.id} style={{ borderTop: '1px solid rgba(255,255,255,.12)', padding: '10px 0' }}>
-            <strong>{player.name}</strong> HP {player.hp} / MP {player.mp}
+            <strong>{player.name}</strong> Lv {player.level} | HP {player.hp} / MP {player.mp} | STA {player.stats.stamina} | DEX {player.stats.dexterity} | INT {player.stats.intelligence} | EMP {player.stats.empathy}
             <div className="row">
               <button className="btn" onClick={() => chooseAction(player, 'attack')}>Attack</button>
               {player.skills.filter((skill) => skill.active).map((skill) => (

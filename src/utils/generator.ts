@@ -1,4 +1,4 @@
-import { Character, Skill, Stats } from '../models'
+import { Character, CharacterVersion, Skill, Stats } from '../models'
 import { callOpenAIChat } from '../services/ai'
 import { loadAiProvider } from './storage'
 
@@ -112,6 +112,13 @@ export async function generateCharacters(descriptions: string[]): Promise<Charac
 
     const hp = computeHP(stats, level)
     const mp = computeMP(stats, level)
+    const versions: CharacterVersion[] = ([1, 2, 3] as const).map((versionLevel) => ({
+      level: versionLevel,
+      stats: { ...stats },
+      skills: skillsForLevel(versionLevel, skills),
+      hp: computeHP(stats, versionLevel),
+      mp: computeMP(stats, versionLevel)
+    }))
 
     const char: Character = {
       id: `c-${Date.now()}-${i}`,
@@ -121,7 +128,8 @@ export async function generateCharacters(descriptions: string[]): Promise<Charac
       skills,
       hp,
       mp,
-      inventory: []
+      inventory: [],
+      versions
     }
 
     results.push(char)

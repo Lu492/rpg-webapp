@@ -1,7 +1,23 @@
-import { Character, Bestiary, Item } from '../models'
+import { Character, Bestiary, Item, CharacterVersion, Skill } from '../models'
 import { defaultCharacters, defaultBestiary, defaultItems } from '../data/seeds'
 
 const PREFIX = 'rpg.'
+
+function makeVersions(character: Character): CharacterVersion[] {
+  const sourceSkills = (character.skills || []).filter((skill) => skill.active)
+  return ([1, 2, 3] as const).map((level) => {
+    const count = level === 1 ? 2 : level === 2 ? 4 : 5
+    const skills: Skill[] = sourceSkills.slice(0, count).map((skill) => ({ ...skill, active: true }))
+    while (skills.length < count) skills.push({ id: `version-${character.id}-${level}-${skills.length}`, name: `Skill ${skills.length + 1}`, description: 'An active character skill.', formula: 'stamina x 2 + dexterity', active: true })
+    return {
+      level,
+      stats: { ...character.stats },
+      skills,
+      hp: character.stats.stamina * 12 + level * 10,
+      mp: character.stats.intelligence * 12 + character.stats.empathy * 6 + level * 5
+    }
+  })
+}
 
 export function saveCharacters(chars: Character[]) {
   localStorage.setItem(PREFIX + 'characters', JSON.stringify(chars))
@@ -14,10 +30,7 @@ export function loadCharacters(): Character[] {
     return (JSON.parse(raw) as Character[]).map((character) => {
       const skillCount = character.level === 1 ? 2 : character.level === 2 ? 4 : 5
       const skills = (character.skills || []).filter((skill) => skill.active).slice(0, skillCount)
-      while (skills.length < skillCount) {
-        skills.push({ id: `stored-${character.id}-${skills.length}`, name: `Skill ${skills.length + 1}`, active: true })
-      }
-      return { ...character, level: character.level || 1, skills }
+      return { ...character, level: character.level || 1, skills, versions: character.versions || makeVersions({ ...character, skills }) }
     })
   } catch (e) {
     return []

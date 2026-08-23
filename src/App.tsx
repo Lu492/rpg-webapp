@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Character, Monster, Item } from './models'
 import { generateCharacters } from './utils/generator'
-import { initializeDefaults, loadAiProvider, loadApiKey, loadCharacters, saveAiProvider, saveApiKey, saveCharacters } from './utils/storage'
+import { initializeDefaults, loadAiProvider, loadApiKey, loadCharacters, loadBestiary, loadInventory, saveAiProvider, saveApiKey, saveBestiary, saveCharacters, saveInventory } from './utils/storage'
 import Stages from './components/Stages'
 import Battle from './components/Battle'
 
@@ -19,6 +19,8 @@ export default function App() {
   const [rewardItems, setRewardItems] = useState<Item[]>([])
   const [provider, setProvider] = useState(loadAiProvider())
   const [apiKey, setApiKey] = useState(loadApiKey() || '')
+  const [managedBestiary, setManagedBestiary] = useState(() => loadBestiary())
+  const [managedInventory, setManagedInventory] = useState(() => loadInventory())
 
   function updateName(index: number, value: string) {
     const next = [...names]
@@ -34,7 +36,11 @@ export default function App() {
   }
 
   function handleStartStage(monsters: Monster[]) {
-    const selectedCharacters = characters.filter((character) => selectedCharacterIds.includes(character.id))
+    const targetLevel = Math.min(stage, 3) as 1 | 2 | 3
+    const selectedCharacters = characters.filter((character) => selectedCharacterIds.includes(character.id)).map((character) => {
+      const version = character.versions?.find((entry) => entry.level === targetLevel)
+      return version ? { ...character, ...version, level: targetLevel, inventory: character.inventory, versions: character.versions } : { ...character, level: targetLevel }
+    })
     if (!selectedCharacters.length) return alert('Select at least one character on the main page')
     const healed = selectedCharacters.map((character) => ({
       ...character,
@@ -58,6 +64,25 @@ export default function App() {
     setPage('setup')
   }
 
+  function deleteCharacter(id: string) {
+    const next = characters.filter((character) => character.id !== id)
+    setCharacters(next)
+    setSelectedCharacterIds((current) => current.filter((value) => value !== id))
+    saveCharacters(next)
+  }
+
+  function deleteMonster(id: string) {
+    const next = { monsters: managedBestiary.monsters.filter((monster) => monster.id !== id) }
+    setManagedBestiary(next)
+    saveBestiary(next)
+  }
+
+  function deleteItem(id: string) {
+    const next = managedInventory.filter((item) => item.id !== id)
+    setManagedInventory(next)
+    saveInventory(next)
+  }
+
   return (
     <div className="page">
       <header className="header">RPG Campaign</header>
@@ -75,8 +100,13 @@ export default function App() {
           <button className="btn" onClick={async () => { await createCharacters() }}>Create Characters</button>
           <button className="btn" style={{ marginTop: 8 }} onClick={() => { const loaded = loadCharacters(); setCharacters(loaded); setSelectedCharacterIds(loaded.map((character) => character.id)) }}>Load Saved Characters</button>
           <h3>Choose Campaign Characters</h3>
-          <ul>{characters.map((character) => <li key={character.id}><label><input type="checkbox" checked={selectedCharacterIds.includes(character.id)} onChange={() => setSelectedCharacterIds((current) => current.includes(character.id) ? current.filter((id) => id !== character.id) : current.length < 3 ? [...current, character.id] : current)} /> {character.name} Lv {character.level}</label></li>)}</ul>
+          <ul>{characters.map((character) => <li key={character.id}><label><input type="checkbox" checked={selectedCharacterIds.includes(character.id)} onChange={() => setSelectedCharacterIds((current) => current.includes(character.id) ? current.filter((id) => id !== character.id) : current.length < 3 ? [...current, character.id] : current)} /> <strong>{character.name}</strong> Lv {character.level} | HP {character.hp} | MP {character.mp} | STA {character.stats.stamina} | DEX {character.stats.dexterity} | INT {character.stats.intelligence} | EMP {character.stats.empathy}</label></li>)}</ul>
           <button className="btn" onClick={() => setPage('setup')}>Start Campaign</button>
+          <details style={{ marginTop: 16 }}><summary>Manage saved elements</summary>
+            <h4>Characters</h4><ul>{characters.map((character) => <li key={character.id}>{character.name} <button type="button" onClick={() => deleteCharacter(character.id)}>Delete</button></li>)}</ul>
+            <h4>Bestiary</h4><ul>{managedBestiary.monsters.map((monster) => <li key={monster.id}>{monster.name} <button type="button" onClick={() => deleteMonster(monster.id)}>Delete</button></li>)}</ul>
+            <h4>Inventory</h4><ul>{managedInventory.map((item) => <li key={item.id}>{item.name} <button type="button" onClick={() => deleteItem(item.id)}>Delete</button></li>)}</ul>
+          </details>
         </>}
         {page === 'setup' && <Stages stage={stage} onStartStage={handleStartStage} />}
         {page === 'encounter' && <Battle initialCharacters={characters} initialMonsters={encounter} onBattleEnd={handleBattleEnd} />}

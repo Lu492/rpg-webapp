@@ -22,6 +22,14 @@ export interface Item {
   passiveSkill?: Skill
 }
 
+export interface CharacterVersion {
+  level: 1 | 2 | 3
+  stats: Stats
+  skills: Skill[]
+  hp: number
+  mp: number
+}
+
 export interface Character {
   id: string
   name: string
@@ -31,6 +39,7 @@ export interface Character {
   hp: number
   mp: number
   inventory: Item[]
+  versions?: CharacterVersion[]
 }
 
 export interface Monster {
