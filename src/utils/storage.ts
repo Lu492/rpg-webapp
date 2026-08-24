@@ -46,12 +46,13 @@ export function loadBestiary(): Bestiary {
   if (!raw) return { monsters: [] }
   try {
     const bestiary = JSON.parse(raw) as Bestiary
-    return {
+    const normalized = {
       monsters: bestiary.monsters.map((monster) => ({
         ...monster,
         kind: monster.kind || (monster.id.startsWith('b-') ? 'boss' : monster.id.startsWith('minion-') ? 'minion' : 'monster')
       }))
     }
+    return normalized
   } catch (e) {
     return { monsters: [] }
   }

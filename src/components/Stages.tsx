@@ -55,8 +55,15 @@ export default function Stages({ stage, onStartStage }: StagesProps) {
     <div style={{ marginTop: 12 }}>
       <h2>{stage === 4 ? 'Boss Stage Setup' : `Stage ${stage} Setup`}</h2>
       <p>How to play: load saved enemies or generate new ones, select the enemies for this encounter, then press Start Stage. Your party was chosen on the main page.</p>
-      <strong>{stage === 4 ? 'Load a boss and up to two minions, or generate a boss' : 'Load monsters or generate 1 to 6 monsters'}</strong>
-      <ul>{bestiary.monsters.map((monster) => <li key={monster.id}><label><input type="checkbox" checked={selectedMonsters.includes(monster.id)} onChange={() => toggleMonster(monster.id)} /> {monster.name} Lv{monster.level}</label></li>)}</ul>
+      {stage === 4 ? <>
+        <strong>Bosses</strong>
+        <ul>{bestiary.monsters.filter((monster) => monster.kind === 'boss').map((monster) => <li key={monster.id}><label><input type="checkbox" checked={selectedMonsters.includes(monster.id)} onChange={() => toggleMonster(monster.id)} /> {monster.name} Lv{monster.level}</label></li>)}</ul>
+        <strong>Minions and regular monsters</strong>
+        <ul>{bestiary.monsters.filter((monster) => monster.kind !== 'boss').map((monster) => <li key={monster.id}><label><input type="checkbox" checked={selectedMonsters.includes(monster.id)} onChange={() => toggleMonster(monster.id)} /> {monster.name} Lv{monster.level}</label></li>)}</ul>
+      </> : <>
+        <strong>Monsters</strong>
+        <ul>{bestiary.monsters.filter((monster) => monster.kind !== 'boss').map((monster) => <li key={monster.id}><label><input type="checkbox" checked={selectedMonsters.includes(monster.id)} onChange={() => toggleMonster(monster.id)} /> {monster.name} Lv{monster.level}</label></li>)}</ul>
+      </>}
       <button className="btn" disabled={!hasApiKey} onClick={generateMonsters}>Generate {stage === 4 ? 'Boss and Minions' : 'Monsters'}{!hasApiKey ? ' (API key required)' : ''}</button>
       <button className="btn" style={{ marginTop: 8 }} onClick={startStage}>Start Stage</button>
     </div>

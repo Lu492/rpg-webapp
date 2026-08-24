@@ -44,6 +44,7 @@ export function defaultBestiary(): Bestiary {
       // bosses
       { id: 'b-1', name: 'Orc Chieftain', level: 3, stats: { stamina: 10, dexterity: 5 }, hp: 120, mp: 10, skills: [], attackPattern: 'focus-weakest', kind: 'boss' },
       { id: 'b-2', name: 'Wraith Lord', level: 3, stats: { stamina: 6, dexterity: 6, intelligence: 8 }, hp: 100, mp: 80, skills: [], attackPattern: 'focus-lowest-hp', kind: 'boss' },
+      { id: 'b-3', name: 'Dragon Sovereign', level: 3, stats: { stamina: 12, dexterity: 7, intelligence: 10 }, hp: 160, mp: 100, skills: [], attackPattern: 'random', kind: 'boss' },
       { id: 'minion-1', name: 'Orc Raider', level: 2, stats: { stamina: 4, dexterity: 4 }, hp: 35, mp: 0, skills: [], attackPattern: 'focus-weakest', kind: 'minion' },
       { id: 'minion-2', name: 'Wraith Servant', level: 2, stats: { stamina: 3, dexterity: 5 }, hp: 30, mp: 20, skills: [], attackPattern: 'focus-lowest-hp', kind: 'minion' }
     ]

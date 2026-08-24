@@ -106,7 +106,8 @@ export default function App() {
           <button className="btn" onClick={() => setPage('setup')}>Start Campaign</button>
           <details style={{ marginTop: 16 }}><summary>Manage saved elements</summary>
             <h4>Characters</h4><ul>{characters.map((character) => <li key={character.id}>{character.name} <button type="button" onClick={() => deleteCharacter(character.id)}>Delete</button></li>)}</ul>
-            <h4>Bestiary</h4><ul>{managedBestiary.monsters.map((monster) => <li key={monster.id}>{monster.name} <button type="button" onClick={() => deleteMonster(monster.id)}>Delete</button></li>)}</ul>
+            <h4>Bosses</h4><ul>{managedBestiary.monsters.filter((monster) => monster.kind === 'boss').map((monster) => <li key={monster.id}>{monster.name} <button type="button" onClick={() => deleteMonster(monster.id)}>Delete</button></li>)}</ul>
+            <h4>Monsters and Minions</h4><ul>{managedBestiary.monsters.filter((monster) => monster.kind !== 'boss').map((monster) => <li key={monster.id}>{monster.name} <button type="button" onClick={() => deleteMonster(monster.id)}>Delete</button></li>)}</ul>
             <h4>Inventory</h4><ul>{managedInventory.map((item) => <li key={item.id}>{item.name} <button type="button" onClick={() => deleteItem(item.id)}>Delete</button></li>)}</ul>
           </details>
         </>}

@@ -19,9 +19,9 @@ function installLocalStorage() {
 describe('bestiary fallback data', () => {
   beforeEach(installLocalStorage)
 
-  it('contains a boss and two minions', () => {
+  it('contains three bosses and two minions', () => {
     const monsters = defaultBestiary().monsters
-    expect(monsters.some((monster) => monster.id.startsWith('b-'))).toBe(true)
+    expect(monsters.filter((monster) => monster.kind === 'boss')).toHaveLength(3)
     expect(monsters.filter((monster) => monster.id.startsWith('minion-'))).toHaveLength(2)
   })
 
