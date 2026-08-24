@@ -14,6 +14,18 @@ export interface Skill {
   description?: string
   formula?: string
   active: boolean
+  target?: 'enemy' | 'ally' | 'self'
+  effect?: 'damage' | 'heal' | 'shield' | 'confuse'
+  power?: number
+  mpCost?: number
+}
+
+export interface StatusEffect {
+  id: 'shielded' | 'confused'
+  name: string
+  kind: 'positive' | 'negative'
+  remainingTurns: number
+  potency?: number
 }
 
 export interface Item {
@@ -40,6 +52,7 @@ export interface Character {
   hp: number
   mp: number
   inventory: Item[]
+  statusEffects?: StatusEffect[]
   versions?: CharacterVersion[]
 }
 
@@ -53,6 +66,7 @@ export interface Monster {
   skills: Skill[]
   attackPattern?: 'focus-weakest' | 'focus-lowest-hp' | 'random'
   kind?: 'monster' | 'minion' | 'boss'
+  statusEffects?: StatusEffect[]
 }
 
 export interface Bestiary {

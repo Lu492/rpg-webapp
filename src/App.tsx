@@ -32,8 +32,10 @@ export default function App() {
 
   async function createCharacters() {
     const created = await generateCharacters(names)
-    saveCharacters(created)
-    setCharacters(created)
+    const existingIds = new Set(characters.map((character) => character.id))
+    const merged = [...characters, ...created.filter((character) => !existingIds.has(character.id))]
+    saveCharacters(merged)
+    setCharacters(merged)
     setSelectedCharacterIds(created.map((character) => character.id))
   }
 

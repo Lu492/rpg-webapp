@@ -7,7 +7,7 @@ export function defaultCharacters(): Character[] {
       name: 'Alric',
       level: 1,
       stats: { stamina: 8, dexterity: 6, intelligence: 4, empathy: 3 },
-      skills: [ { id: 's1', name: 'Power Strike', description: 'A powerful physical attack.', formula: 'stamina x 2 + dexterity, x1.6', active: true }, { id: 's2', name: 'Rapid Shot', description: 'A quick ranged attack.', formula: 'stamina x 2 + dexterity, x1.1', active: true } ],
+      skills: [ { id: 's1', name: 'Power Strike', description: 'A powerful physical attack.', formula: 'stamina x 2 + dexterity, x1.6', active: true, target: 'enemy', effect: 'damage', power: 1.6 }, { id: 's2', name: 'Rapid Shot', description: 'A quick ranged attack.', formula: 'stamina x 2 + dexterity, x1.1', active: true, target: 'enemy', effect: 'damage', power: 1.1 } ],
       hp: 8 * 12 + 1 * 10,
       mp: 4 * 12 + 3 * 6 + 1 * 5,
       inventory: []
@@ -17,7 +17,7 @@ export function defaultCharacters(): Character[] {
       name: 'Mira',
       level: 1,
       stats: { stamina: 5, dexterity: 8, intelligence: 6, empathy: 4 },
-      skills: [ { id: 's3', name: 'Mind Shield', description: 'A focused defensive strike.', formula: 'stamina x 2 + dexterity, x0.8', active: true }, { id: 's5', name: 'Sneak', description: 'A precise attack from the shadows.', formula: 'stamina x 2 + dexterity', active: true } ],
+      skills: [ { id: 's3', name: 'Mind Shield', description: 'Protects an ally from the next attack.', formula: 'Shield for 2 turns', active: true, target: 'ally', effect: 'shield', power: 0.5 }, { id: 's5', name: 'Sneak', description: 'A precise attack from the shadows.', formula: 'stamina x 2 + dexterity', active: true, target: 'enemy', effect: 'damage' } ],
       hp: 5 * 12 + 1 * 10,
       mp: 6 * 12 + 4 * 6 + 1 * 5,
       inventory: []
@@ -27,7 +27,7 @@ export function defaultCharacters(): Character[] {
       name: 'Gor',
       level: 1,
       stats: { stamina: 7, dexterity: 4, intelligence: 3, empathy: 2 },
-      skills: [ { id: 's6', name: 'Taunt', description: 'An attack that draws enemy attention.', formula: 'stamina x 2 + dexterity', active: true }, { id: 's7', name: 'Fortify', description: 'A sturdy defensive attack.', formula: 'stamina x 2 + dexterity', active: true } ],
+      skills: [ { id: 's6', name: 'Taunt', description: 'An attack that draws enemy attention.', formula: 'Damage and confuse an enemy for 1 turn', active: true, target: 'enemy', effect: 'confuse' }, { id: 's7', name: 'Fortify', description: 'Shield yourself for 2 turns', formula: 'Shield for 2 turns', active: true, target: 'self', effect: 'shield', power: 0.5 } ],
       hp: 7 * 12 + 1 * 10,
       mp: 3 * 12 + 2 * 6 + 1 * 5,
       inventory: []

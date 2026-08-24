@@ -44,6 +44,23 @@ describe('turn-based combat', () => {
     expect(next.monsters[0].hp).toBeLessThan(30)
   })
 
+  it('respects the selected target and applies negative status effects', () => {
+    const players = defaultCharacters()
+    const monsters = defaultBestiary().monsters.slice(0, 2)
+    const state = createBattleState(players, monsters)
+    const next = resolvePlayerTurn(state, { [players[2].id]: { type: 'skill', skillId: 's6', targetId: monsters[1].id } })
+    expect(next.monsters[0].hp).toBe(monsters[0].hp)
+    expect(next.monsters[1].hp).toBeLessThan(monsters[1].hp)
+    expect(next.monsters[1].statusEffects?.map((status) => status.id)).toContain('confused')
+  })
+
+  it('applies a positive shield to the selected ally', () => {
+    const players = defaultCharacters()
+    const state = createBattleState(players, [defaultBestiary().monsters[0]])
+    const next = resolvePlayerTurn(state, { [players[1].id]: { type: 'skill', skillId: 's3', targetId: players[2].id } })
+    expect(next.players[2].statusEffects).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'shielded', remainingTurns: 2 })]))
+  })
+
   it('uses a stored attack pattern without an API key', async () => {
     const players = defaultCharacters()
     const monster = defaultBestiary().monsters.find((entry) => entry.id === 'm-1')!

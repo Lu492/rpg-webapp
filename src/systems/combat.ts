@@ -1,13 +1,13 @@
-import { Character, Monster, Skill, Stats, Item } from '../models'
+import { Character, Monster, Skill, Stats, Item, StatusEffect } from '../models'
 import { callOpenAIChat } from '../services/ai'
 import { loadAiProvider } from '../utils/storage'
 
 function cloneChars(chars: Character[]) {
-  return chars.map((c) => ({ ...c, hp: c.hp, mp: c.mp }))
+  return chars.map((c) => ({ ...c, hp: c.hp, mp: c.mp, statusEffects: c.statusEffects?.map((status) => ({ ...status })) }))
 }
 
 function cloneMonsters(ms: Monster[]) {
-  return ms.map((m) => ({ ...m }))
+  return ms.map((m) => ({ ...m, statusEffects: m.statusEffects?.map((status) => ({ ...status })) }))
 }
 
 function randInt(min: number, max: number) {
@@ -16,6 +16,7 @@ function randInt(min: number, max: number) {
 
 function skillDamageMultiplier(skill?: Skill) {
   if (!skill) return 1
+  if (skill.power !== undefined) return skill.power
   const name = skill.name.toLowerCase()
   if (name.includes('power')) return 1.6
   if (name.includes('rapid')) return 1.1
@@ -49,6 +50,57 @@ function addStateLog(state: InteractiveBattleState, text: string) {
   state.logs = [...state.logs, { turn: state.turn, text }]
 }
 
+function skillTarget(skill: Skill): 'enemy' | 'ally' | 'self' {
+  if (skill.target) return skill.target
+  const name = skill.name.toLowerCase()
+  return name.includes('heal') || name.includes('shield') || name.includes('fortify') ? 'self' : 'enemy'
+}
+
+function skillEffect(skill: Skill): 'damage' | 'heal' | 'shield' | 'confuse' {
+  if (skill.effect) return skill.effect
+  const name = skill.name.toLowerCase()
+  if (name.includes('heal')) return 'heal'
+  if (name.includes('shield') || name.includes('fortify')) return 'shield'
+  return 'damage'
+}
+
+function addStatus(target: Character | Monster, status: StatusEffect) {
+  target.statusEffects = [...(target.statusEffects || []).filter((entry) => entry.id !== status.id), status]
+}
+
+function hasStatus(target: Character | Monster, id: StatusEffect['id']) {
+  return (target.statusEffects || []).some((status) => status.id === id && status.remainingTurns > 0)
+}
+
+function advanceStatuses(target: Character | Monster) {
+  target.statusEffects = (target.statusEffects || [])
+    .map((status) => ({ ...status, remainingTurns: status.remainingTurns - 1 }))
+    .filter((status) => status.remainingTurns > 0)
+}
+
+function applySkill(state: InteractiveBattleState, player: Character, skill: Skill, target: Character | Monster) {
+  const effect = skillEffect(skill)
+  if (effect === 'heal' && 'inventory' in target) {
+    const amount = Math.max(4, player.stats.empathy * 3)
+    target.hp = Math.min(target.stats.stamina * 12 + target.level * 10, target.hp + amount)
+    addStateLog(state, `${player.name} uses ${skill.name} on ${target.name} and restores ${amount} HP`)
+    return
+  }
+  if (effect === 'shield') {
+    addStatus(target, { id: 'shielded', name: 'Shielded', kind: 'positive', remainingTurns: 2, potency: skill.power || 0.5 })
+    addStateLog(state, `${player.name} uses ${skill.name}: ${target.name} is Shielded`)
+    return
+  }
+  let damage = computeCharAttackDamage(player, skill)
+  if (hasStatus(target, 'shielded')) damage = Math.max(1, Math.round(damage * 0.5))
+  target.hp = Math.max(0, target.hp - damage)
+  addStateLog(state, `${player.name} uses ${skill.name} on ${target.name} for ${damage} damage`)
+  if (effect === 'confuse' && target.hp > 0) {
+    addStatus(target, { id: 'confused', name: 'Confused', kind: 'negative', remainingTurns: 1 })
+    addStateLog(state, `${target.name} is Confused`)
+  }
+}
+
 export function createBattleState(players: Character[], monsters: Monster[]): InteractiveBattleState {
   const state: InteractiveBattleState = {
     players: cloneChars(players).map((p) => ({ ...p, skills: [...p.skills] })),
@@ -66,20 +118,27 @@ export function resolvePlayerTurn(state: InteractiveBattleState, actions: Record
   for (const player of next.players) {
     if (player.hp <= 0) continue
     const action = actions[player.id]
-    const target = next.monsters.find((m) => m.id === action?.targetId && m.hp > 0) || next.monsters.find((m) => m.hp > 0)
-    if (!action || !target) continue
+    if (!action) continue
     if (action.type === 'defend') {
+      addStatus(player, { id: 'shielded', name: 'Shielded', kind: 'positive', remainingTurns: 1, potency: 0.5 })
       addStateLog(next, `${player.name} guards until the next turn`)
       continue
     }
     const skill = action.type === 'skill' ? player.skills.find((s) => s.id === action.skillId && s.active) : undefined
-    if (skill?.name.toLowerCase().includes('heal')) {
-      const amount = Math.max(4, player.stats.empathy * 3)
-      player.hp = Math.min(player.stats.stamina * 12 + player.level * 10, player.hp + amount)
-      addStateLog(next, `${player.name} uses ${skill.name} and recovers ${amount} HP`)
+    const targetKind = skill ? skillTarget(skill) : 'enemy'
+    const pool = targetKind === 'enemy' ? next.monsters : next.players
+    const target = targetKind === 'self' ? player : pool.find((entry) => entry.id === action.targetId && entry.hp > 0) || pool.find((entry) => entry.hp > 0)
+    if (!target) continue
+    if (hasStatus(player, 'confused') && Math.random() < 0.5) {
+      addStateLog(next, `${player.name} is Confused and loses the action`)
       continue
     }
-    const damage = computeCharAttackDamage(player, skill)
+    if (skill) {
+      applySkill(next, player, skill, target)
+      continue
+    }
+    let damage = computeCharAttackDamage(player, skill)
+    if (hasStatus(target, 'shielded')) damage = Math.max(1, Math.round(damage * 0.5))
     target.hp = Math.max(0, target.hp - damage)
     addStateLog(next, `${player.name} uses ${skill ? skill.name : 'Attack'} on ${target.name} for ${damage} damage`)
   }
@@ -123,10 +182,17 @@ export async function resolveEnemyTurn(state: InteractiveBattleState, apiKey?: s
     const choice = await chooseEnemyAction(monster, next.players, apiKey)
     usedFallback = usedFallback || choice.usedFallback
     const target = next.players.find((p) => p.id === choice.action.targetId && p.hp > 0) || living[0]
-    const damage = computeMonsterAttackDamage(monster)
+    if (hasStatus(monster, 'confused') && Math.random() < 0.5) {
+      addStateLog(next, `${monster.name} is Confused and misses its turn`)
+      continue
+    }
+    let damage = computeMonsterAttackDamage(monster)
+    if (hasStatus(target, 'shielded')) damage = Math.max(1, Math.round(damage * 0.5))
     target.hp = Math.max(0, target.hp - damage)
     addStateLog(next, `${monster.name} attacks ${target.name} for ${damage} damage`)
   }
+  next.players.forEach(advanceStatuses)
+  next.monsters.forEach(advanceStatuses)
   if (!next.players.some((p) => p.hp > 0)) next.phase = 'lost'
   else {
     next.turn += 1
@@ -205,7 +271,7 @@ export function postBattleRewards(winner: 'players' | 'monsters' | 'draw', playe
       nk.level = (nk.level + 1) as 1 | 2 | 3
       const targetSkillCount = nk.level === 2 ? 4 : 5
       const skills = [...nk.skills]
-      while (skills.length < targetSkillCount) skills.push({ id: `g-${Date.now()}-${skills.length}`, name: `New Skill ${skills.length + 1}`, description: 'A newly learned active skill.', formula: 'stamina x 2 + dexterity', active: true })
+      while (skills.length < targetSkillCount) skills.push({ id: `g-${Date.now()}-${skills.length}`, name: 'Training Strike', description: 'Deal physical damage to one enemy.', formula: 'stamina x 2 + dexterity', target: 'enemy', effect: 'damage', mpCost: 0, active: true })
       nk.skills = skills.slice(0, targetSkillCount).map((skill) => ({ ...skill, active: true }))
     }
     // recompute hp/mp full

@@ -52,9 +52,20 @@ export default function Battle({ initialCharacters, initialMonsters, onBattleEnd
   }
 
   function chooseAction(player: Character, type: PlayerAction['type'], skillId?: string) {
-    const target = state?.monsters.find((monster) => monster.hp > 0)
-    if (!target) return
-    setActions((current) => ({ ...current, [player.id]: { type, targetId: target.id, skillId } }))
+    if (!state) return
+    const skill = skillId ? player.skills.find((entry) => entry.id === skillId) : undefined
+    const targetType = skill?.target || (skill && /heal|shield|fortify/i.test(skill.name) ? 'self' : 'enemy')
+    const target = targetType === 'self'
+      ? player
+      : targetType === 'ally'
+        ? state.players.find((entry) => entry.hp > 0)
+        : state.monsters.find((entry) => entry.hp > 0)
+    if (!target && type !== 'defend') return
+    setActions((current) => ({ ...current, [player.id]: { type, targetId: target?.id || player.id, skillId } }))
+  }
+
+  function retarget(playerId: string, targetId: string) {
+    setActions((current) => current[playerId] ? { ...current, [playerId]: { ...current[playerId], targetId } } : current)
   }
 
   function submitPlayerTurn() {
@@ -104,6 +115,7 @@ export default function Battle({ initialCharacters, initialMonsters, onBattleEnd
         {state.phase === 'players' && state.players.map((player) => player.hp > 0 && (
           <div key={player.id} style={{ borderTop: '1px solid rgba(255,255,255,.12)', padding: '10px 0' }}>
             <strong>{player.name}</strong> Lv {player.level} | HP {player.hp} / MP {player.mp} | STA {player.stats.stamina} | DEX {player.stats.dexterity} | INT {player.stats.intelligence} | EMP {player.stats.empathy}
+            {player.statusEffects?.filter((status) => status.remainingTurns > 0).map((status) => <span key={status.id} style={{ marginLeft: 6, color: status.kind === 'positive' ? '#6ee7b7' : '#fda4af' }}>{status.name} ({status.remainingTurns})</span>)}
             <div className="row">
               <button className="btn" onClick={() => chooseAction(player, 'attack')}>Attack</button>
               {player.skills.filter((skill) => skill.active).map((skill) => (
@@ -112,10 +124,16 @@ export default function Battle({ initialCharacters, initialMonsters, onBattleEnd
               <button className="btn" onClick={() => chooseAction(player, 'defend')}>Defend</button>
             </div>
             <small>{actions[player.id] ? `Chosen: ${actions[player.id].type}` : 'Choose an action'}</small>
+            {actions[player.id] && actions[player.id].type !== 'defend' && (() => {
+              const selectedSkill = actions[player.id].skillId ? player.skills.find((skill) => skill.id === actions[player.id].skillId) : undefined
+              const targetType = selectedSkill?.target || (selectedSkill && /heal|shield|fortify/i.test(selectedSkill.name) ? 'self' : 'enemy')
+              const targets = targetType === 'enemy' ? state.monsters.filter((monster) => monster.hp > 0) : state.players.filter((entry) => entry.hp > 0)
+              return <div style={{ marginTop: 6 }}><small>Target: </small>{targetType === 'self' ? <strong>{player.name}</strong> : targets.map((target) => <button key={target.id} type="button" className="btn" style={{ flex: 'none', margin: 2, padding: '4px 8px', background: actions[player.id].targetId === target.id ? '#fbbf24' : undefined }} onClick={() => retarget(player.id, target.id)}>{target.name} ({target.hp})</button>)}</div>
+            })()}
             {player.skills.filter((skill) => skill.id === infoSkill).map((skill) => <div key={skill.id} role="dialog"><strong>{skill.name}</strong>: {skill.description || 'Active skill'} Formula: {skill.formula || 'Base damage plus skill modifier.'}</div>)}
           </div>
         ))}
-        <div><strong>Enemies:</strong> {state.monsters.map((monster) => `${monster.name} HP ${monster.hp}`).join(' · ')}</div>
+        <div><strong>Enemies:</strong> {state.monsters.map((monster) => <span key={monster.id} style={{ marginRight: 10 }}>{monster.name} HP {monster.hp}{monster.statusEffects?.filter((status) => status.remainingTurns > 0).map((status) => <span key={status.id} style={{ color: status.kind === 'positive' ? '#6ee7b7' : '#fda4af' }}> [{status.name} {status.remainingTurns}]</span>)}</span>)}</div>
         {state.phase === 'players' && <button className="btn" style={{ marginTop: 10 }} onClick={submitPlayerTurn}>Resolve Character Turns</button>}
         {state.phase === 'enemies' && <button className="btn" style={{ marginTop: 10 }} onClick={submitEnemyTurn}>Resolve Enemy Turns</button>}
         {(state.phase === 'won' || state.phase === 'lost') && <button className="btn" style={{ marginTop: 10 }} onClick={finishBattle}>Finish Battle</button>}

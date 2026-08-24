@@ -1,6 +1,7 @@
 // Provides stage-specific enemy selection and generation before an encounter begins.
 import React, { useState } from 'react'
 import { Monster } from '../models'
+import { generateMonsters } from '../utils/generator'
 import { loadBestiary, saveBestiary } from '../utils/storage'
 import { loadApiKey } from '../utils/storage'
 
@@ -18,19 +19,9 @@ export default function Stages({ stage, onStartStage }: StagesProps) {
     setSelectedMonsters((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id])
   }
 
-  function generateMonsters() {
+  async function createGeneratedMonsters() {
     const count = stage === 4 ? 3 : Math.floor(Math.random() * 6) + 1
-    const generated: Monster[] = Array.from({ length: count }, (_, index) => ({
-      id: `stage-${Date.now()}-${index}`,
-      name: stage === 4 ? (index === 0 ? 'Generated Boss' : `Generated Minion ${index}`) : `Generated Monster ${index + 1}`,
-      level: stage,
-      stats: { stamina: stage + 3, dexterity: stage + 2 },
-      hp: stage === 4 ? 120 : 20 + stage * 15,
-      mp: stage === 4 ? 40 : 0,
-      skills: [],
-      attackPattern: stage % 2 === 0 ? 'focus-lowest-hp' : 'focus-weakest',
-      kind: stage === 4 ? (index === 0 ? 'boss' : 'minion') : 'monster'
-    }))
+    const generated: Monster[] = await generateMonsters(stage, count)
     const next = { monsters: [...bestiary.monsters, ...generated] }
     saveBestiary(next)
     setBestiary(next)
@@ -64,7 +55,7 @@ export default function Stages({ stage, onStartStage }: StagesProps) {
         <strong>Monsters</strong>
         <ul>{bestiary.monsters.filter((monster) => monster.kind !== 'boss').map((monster) => <li key={monster.id}><label><input type="checkbox" checked={selectedMonsters.includes(monster.id)} onChange={() => toggleMonster(monster.id)} /> {monster.name} Lv{monster.level}</label></li>)}</ul>
       </>}
-      <button className="btn" disabled={!hasApiKey} onClick={generateMonsters}>Generate {stage === 4 ? 'Boss and Minions' : 'Monsters'}{!hasApiKey ? ' (API key required)' : ''}</button>
+      <button className="btn" disabled={!hasApiKey} onClick={createGeneratedMonsters}>Generate {stage === 4 ? 'Boss and Minions' : 'Monsters'}{!hasApiKey ? ' (API key required)' : ''}</button>
       <button className="btn" style={{ marginTop: 8 }} onClick={startStage}>Start Stage</button>
     </div>
   )

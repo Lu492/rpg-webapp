@@ -8,7 +8,7 @@ function makeVersions(character: Character): CharacterVersion[] {
   return ([1, 2, 3] as const).map((level) => {
     const count = level === 1 ? 2 : level === 2 ? 4 : 5
     const skills: Skill[] = sourceSkills.slice(0, count).map((skill) => ({ ...skill, active: true }))
-    while (skills.length < count) skills.push({ id: `version-${character.id}-${level}-${skills.length}`, name: `Skill ${skills.length + 1}`, description: 'An active character skill.', formula: 'stamina x 2 + dexterity', active: true })
+    while (skills.length < count) skills.push({ id: `version-${character.id}-${level}-${skills.length}`, name: 'Basic Attack', description: 'Deal physical damage to one enemy.', formula: 'stamina x 2 + dexterity', target: 'enemy', effect: 'damage', mpCost: 0, active: true })
     return {
       level,
       stats: { ...character.stats },
